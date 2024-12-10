@@ -1,5 +1,6 @@
 package pl.edu.mazovia.mazovia
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import android.util.Log
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.withContext
 import kotlinx.io.IOException
 import retrofit2.Call
 import retrofit2.Callback
@@ -39,6 +41,7 @@ import retrofit2.Retrofit
 fun LoginScreen(navController: NavController) {
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -88,7 +91,9 @@ fun LoginScreen(navController: NavController) {
             Button(
                 onClick = {
                     // Logika logowania
-                    performLogin(login, password, navController)
+                    runBlocking {
+                        performLogin(login, password, navController, context)
+                    }
                 },
                 modifier = Modifier.weight(1f)
             ) {
@@ -118,15 +123,21 @@ fun LoginScreen(navController: NavController) {
     }
 }
 
-private fun performLogin(
+private suspend fun performLogin(
     login: String,
     password: String,
-    navController: NavController
+    navController: NavController,
+    context: Context
 ) {
     if (login.isNotEmpty() && password.isNotEmpty()) {
 
         val retrofitMazoviaApi = RetrofitMazoviaApi.shared()
-        retrofitMazoviaApi.sendLogin(login, password)
+        var scode = ""
+        var s = TokenService.getServerCode(context)
+        if (s != null) {
+            scode = s
+        }
+        retrofitMazoviaApi.sendLogin(username = login,password = password, serverCode = scode)
             .enqueue(object : Callback<LoginResponse> {
                 override fun onResponse(
                     call: Call<LoginResponse>,
@@ -147,6 +158,12 @@ private fun performLogin(
 //                        }
 
                         val result = response.body()
+                        if (result?.access_token != null && result.refresh_token != null && result.expires_in != null) {
+                        } else if (result?.status != null && result.message != null && result.serverCode != null) {
+                            runBlocking {
+                            }
+                        } else {
+                        }
 
                         when {
                             result?.access_token != null && result?.refresh_token != null && result?.expires_in != null -> {
@@ -154,16 +171,29 @@ private fun performLogin(
 //                                TokenService.saveToken(result.access_token, result.refresh_token)
                                 // performSegue(withIdentifier: "LoginToHomeS", sender: this)
 
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                runBlocking {
+                                    TokenService.saveToken(
+                                        context,
+                                        result.access_token,
+                                        result.refresh_token
+                                    )
+                                    Log.w("Success", "token saved")
+                                    navController.navigate(Screen.Home.route) {
+                                        popUpTo(Screen.Login.route) { inclusive = true }
+                                    }
                                 }
                             }
                             result?.status != null && result?.message != null && result?.serverCode != null -> {
                                 // TokenService.saveServerCode(result.serverCode)
                                 // showToast(message = "${result.status} | ${result.message}")
+                                runBlocking {
+                                TokenService.saveServerCode(context, result.serverCode)
+                                }
+                                Log.w("Success", "server code saved")
                             }
                             else -> {
                                 // showToast(message = "$result")
+                                Log.e("login failure", "login failed $result")
                             }
                         }
 

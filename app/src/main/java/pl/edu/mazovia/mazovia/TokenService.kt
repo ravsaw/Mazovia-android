@@ -28,13 +28,18 @@ object TokenService {
         load(null)
     }
 
+    private var store: DataStore<Preferences>? = null
+
     // DataStore creation method
-    private fun createDataStore(context: Context): DataStore<Preferences> {
-        return PreferenceDataStoreFactory.create(
-            produceFile = {
-                File(context.filesDir, DATASTORE_FILE_NAME)
-            }
-        )
+    private fun getDataStore(context: Context): DataStore<Preferences> {
+        if (store == null) {
+            store = PreferenceDataStoreFactory.create(
+                corruptionHandler = null,
+                migrations = emptyList(),
+                produceFile = { File(context.applicationContext.filesDir, DATASTORE_FILE_NAME) }
+            )
+        }
+        return store!!
     }
 
     /**
@@ -42,7 +47,7 @@ object TokenService {
      */
     suspend fun saveToken(context: Context, accessToken: String, refreshToken: String) =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.edit { preferences ->
                 preferences[ACCESS_TOKEN_KEY] = accessToken
                 preferences[REFRESH_TOKEN_KEY] = refreshToken
@@ -54,7 +59,7 @@ object TokenService {
      */
     suspend fun saveServerCode(context: Context, serverCode: String) =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.edit { preferences ->
                 preferences[SERVER_CODE_KEY] = serverCode
             }
@@ -65,7 +70,7 @@ object TokenService {
      */
     suspend fun saveTfaCode(context: Context, tfaCode: String) =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.edit { preferences ->
                 preferences[TFA_CODE_KEY] = tfaCode
             }
@@ -76,7 +81,7 @@ object TokenService {
      */
     suspend fun removeToken(context: Context) =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.edit { preferences ->
                 preferences.remove(ACCESS_TOKEN_KEY)
                 preferences.remove(REFRESH_TOKEN_KEY)
@@ -88,7 +93,7 @@ object TokenService {
      */
     suspend fun removeServerCode(context: Context) =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.edit { preferences ->
                 preferences.remove(SERVER_CODE_KEY)
             }
@@ -99,7 +104,7 @@ object TokenService {
      */
     suspend fun removeTfaCode(context: Context) =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.edit { preferences ->
                 preferences.remove(TFA_CODE_KEY)
             }
@@ -122,7 +127,7 @@ object TokenService {
      */
     suspend fun getAccessToken(context: Context): String? =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.data
                 .map { preferences -> preferences[ACCESS_TOKEN_KEY] }
                 .first()
@@ -133,7 +138,7 @@ object TokenService {
      */
     suspend fun getRefreshToken(context: Context): String? =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.data
                 .map { preferences -> preferences[REFRESH_TOKEN_KEY] }
                 .first()
@@ -144,7 +149,7 @@ object TokenService {
      */
     suspend fun getServerCode(context: Context): String? =
         withContext(Dispatchers.IO) {
-            val dataStore = createDataStore(context)
+            val dataStore = getDataStore(context)
             dataStore.data
                 .map { preferences -> preferences[SERVER_CODE_KEY] }
                 .first()

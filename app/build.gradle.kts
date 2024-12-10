@@ -5,12 +5,11 @@ plugins {
 
 android {
     namespace = "pl.edu.mazovia.mazovia"
-    compileSdk = 34
-
+    compileSdk = 35
     defaultConfig {
         applicationId = "pl.edu.mazovia.mazovia"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -65,9 +64,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.navigation.runtime.ktx)
-    implementation(libs.androidx.datastore.core.jvm)
+    implementation(libs.androidx.datastore.core.android)
     implementation(libs.androidx.datastore.preferences.core.jvm)
-    testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
