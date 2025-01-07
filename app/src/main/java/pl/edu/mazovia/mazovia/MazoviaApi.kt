@@ -1,5 +1,7 @@
 package pl.edu.mazovia.mazovia
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -45,7 +47,7 @@ interface MazoviaApi {
     suspend fun tfaTest(): String
 
     @GET("tfa/list")
-    suspend fun getRequestsForConfirmList(): List<TFAElementResponse>
+    suspend fun getTFAConfirmList(): List<TFAElementResponse>
 
     @POST("tfa/verify")
     suspend fun tfaVerify(
@@ -64,6 +66,9 @@ interface MazoviaApi {
 
     @GET("tfa/tmp-clear")
     suspend fun tfaClearDev(): String
+
+    @GET("/verification/request/list")
+    suspend fun getConfirmList(): ConfirmList
 }
 
 class RetrofitMazoviaApi {
@@ -141,12 +146,65 @@ data class DebugVerifyResponse(
     constructor() : this(null, null)
 }
 
+
+
 data class DebugUnverifyResponse(
     val success: Boolean? = null,
     val message: String? = null,
 ) {
     constructor() : this(null, null)
 }
+
+@Serializable
+data class ConfirmList(
+    val success: Boolean,
+    val data: List<Datum>
+)
+
+@Serializable
+data class Datum(
+    val id: String,
+    @SerialName("verification_id")
+    val verificationId: String,
+    val type: String,
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("initiated_by")
+    val initiatedBy: String,
+    val status: String,
+    @SerialName("context_data")
+    val contextData: String,
+    @SerialName("initiated_at")
+    val initiatedAt: String,
+    @SerialName("expires_at")
+    val expiresAt: String,
+    @SerialName("created_at")
+    val createdAt: String,
+    @SerialName("updated_at")
+    val updatedAt: String,
+    val result: ConfirmResult?
+)
+
+@Serializable
+data class ConfirmResult(
+    val id: String,
+    @SerialName("verification_id")
+    val verificationId: String,
+    @SerialName("device_id")
+    val deviceId: String,
+    val action: String,
+    @SerialName("biometric_verified")
+    val biometricVerified: String,
+    @SerialName("verification_code")
+    val verificationCode: String? = null,
+    @SerialName("reject_reason")
+    val rejectReason: String? = null,
+    @SerialName("verified_at")
+    val verifiedAt: String,
+    @SerialName("created_at")
+    val createdAt: String
+)
+
 
 //interface MazoviaApi {
 //    suspend fun sendLogin(username: String, password: String): String //LoginResponse

@@ -43,11 +43,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.runBlocking
 
 // Model danych
 data class YourDataModel(
     val name: String,
-    val description: String
+    val description: String,
+    val acceptClick: () -> Unit,
+    val rejectClick: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,6 +148,7 @@ fun SwipeableItemRow(
 fun HomeScreen(navController: NavController) {
     // Stan listy i refreshingu
     var items by remember { mutableStateOf(listOf<YourDataModel>()) }
+    var items2 by remember { mutableStateOf(listOf<YourDataModel>()) }
     var isRefreshing by remember { mutableStateOf(false) }
 
     // Funkcja do ładowania danych
@@ -153,10 +157,28 @@ fun HomeScreen(navController: NavController) {
         // Tutaj wywołaj swoje API
         // Przykładowe dane
         items = listOf(
-            YourDataModel("Tytuł 1", "Opis 1"),
-            YourDataModel("Tytuł 2", "Opis 2")
+            YourDataModel("Tytuł 1", "Opis 1", {}, {}),
+            YourDataModel("Tytuł 2", "Opis 2", {}, {})
+        )
+        items2 = listOf(
+            YourDataModel("Tytuł 3", "Opis 3", {}, {}),
+            YourDataModel("Tytuł 4", "Opis 4", {}, {})
         )
         isRefreshing = false
+
+        runBlocking {
+
+            val list1 = RetrofitMazoviaApi.shared().getTFAConfirmList().map { element ->
+                    YourDataModel(element.ip_address, element.user_agent.orEmpty(), {}, {})
+                }
+            val list2 = RetrofitMazoviaApi.shared().getConfirmList().data.map { e ->
+                YourDataModel(e.type, e.contextData, {}, {})
+            }
+
+
+        }
+
+
     }
 
     // Wywołaj ładowanie przy pierwszym uruchomieniu
