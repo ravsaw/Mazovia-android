@@ -211,6 +211,9 @@ private suspend fun performLogin(
 
     } else {
 
+        navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Login.route) { inclusive = true }
+        }
     }
 }
 

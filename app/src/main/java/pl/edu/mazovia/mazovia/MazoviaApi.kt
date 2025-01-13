@@ -1,5 +1,11 @@
 package pl.edu.mazovia.mazovia
 
+import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.io.IOException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
@@ -13,6 +19,27 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
+import retrofit2.HttpException
+import retrofit2.http.Body
+import retrofit2.http.Header
+import retrofit2.http.Headers
+
+// First, let's create a data class for the request body
+data class VerificationRequestBody(
+    @SerializedName("verification_id") val verificationId: String,
+    val action: String,
+    @SerializedName("device_id") val deviceId: String,
+    @SerializedName("biometric_verified") val biometricVerified: Boolean,
+    @SerializedName("verification_code") val verificationCode: String? = null,
+    @SerializedName("reject_reason") val rejectReason: String? = null
+)
+
+// Optional: Response data class (adjust based on your actual response structure)
+data class VerificationResponse(
+    val success: Boolean,
+    val message: String? = null
+)
+
 
 interface MazoviaApi {
     @FormUrlEncoded
@@ -67,8 +94,15 @@ interface MazoviaApi {
     @GET("tfa/tmp-clear")
     suspend fun tfaClearDev(): String
 
-    @GET("/verification/request/list")
+    @Headers("Content-Type: application/json")
+    @GET("verification/request/list")
     suspend fun getConfirmList(): ConfirmList
+
+    @Headers("Content-Type: application/json")
+    @POST("verification/request/verify")
+    suspend fun verifyRequest(
+        @Body request: VerificationRequestBody
+    ): VerificationResponse
 }
 
 class RetrofitMazoviaApi {
@@ -90,7 +124,14 @@ class RetrofitMazoviaApi {
         private val service: MazoviaApi = retrofit.create(MazoviaApi::class.java)
 
         fun shared(): MazoviaApi = service
+        fun shared2(): Repository = RepositoryImpl(service = service)
     }
+}
+
+sealed class ResultWrapper<out T> {
+    data class Success<out T>(val value: T): ResultWrapper<T>()
+    data class GenericError(val code: Int? = null, val error: ErrorResponse? = null): ResultWrapper<Nothing>()
+    object NetworkError: ResultWrapper<Nothing>()
 }
 
 data class LoginResponse(
@@ -155,57 +196,100 @@ data class DebugUnverifyResponse(
     constructor() : this(null, null)
 }
 
-@Serializable
 data class ConfirmList(
     val success: Boolean,
-    val data: List<Datum>
+    val data: List<Data>
 )
 
-@Serializable
-data class Datum(
+data class Data(
     val id: String,
-    @SerialName("verification_id")
+    @SerializedName("verification_id")
     val verificationId: String,
     val type: String,
-    @SerialName("user_id")
+    @SerializedName("user_id")
     val userId: String,
-    @SerialName("initiated_by")
+    @SerializedName("initiated_by")
     val initiatedBy: String,
     val status: String,
-    @SerialName("context_data")
+    @SerializedName("context_data")
     val contextData: String,
-    @SerialName("initiated_at")
+    @SerializedName("initiated_at")
     val initiatedAt: String,
-    @SerialName("expires_at")
+    @SerializedName("expires_at")
     val expiresAt: String,
-    @SerialName("created_at")
+    @SerializedName("created_at")
     val createdAt: String,
-    @SerialName("updated_at")
+    @SerializedName("updated_at")
     val updatedAt: String,
     val result: ConfirmResult?
 )
 
-@Serializable
 data class ConfirmResult(
     val id: String,
-    @SerialName("verification_id")
+    @SerializedName("verification_id")
     val verificationId: String,
-    @SerialName("device_id")
+    @SerializedName("device_id")
     val deviceId: String,
     val action: String,
-    @SerialName("biometric_verified")
+    @SerializedName("biometric_verified")
     val biometricVerified: String,
-    @SerialName("verification_code")
+    @SerializedName("verification_code")
     val verificationCode: String? = null,
-    @SerialName("reject_reason")
+    @SerializedName("reject_reason")
     val rejectReason: String? = null,
-    @SerialName("verified_at")
+    @SerializedName("verified_at")
     val verifiedAt: String,
-    @SerialName("created_at")
+    @SerializedName("created_at")
     val createdAt: String
 )
 
+interface Repository {
+    suspend fun getConfirmList(): ResultWrapper<ConfirmList>
+    suspend fun verifyRequest(request: VerificationRequestBody): ResultWrapper<VerificationResponse>
+}
 
+class RepositoryImpl(private val service: MazoviaApi,
+                     private val dispatcher: CoroutineDispatcher = Dispatchers.IO) : Repository {
+
+    override suspend fun getConfirmList(): ResultWrapper<ConfirmList> {
+        return safeApiCall(dispatcher) { service.getConfirmList() }
+    }
+
+    override suspend fun verifyRequest(request: VerificationRequestBody): ResultWrapper<VerificationResponse> {
+        return safeApiCall(dispatcher) { service.verifyRequest(request) }
+    }
+}
+
+suspend fun <T> safeApiCall(dispatcher: CoroutineDispatcher, apiCall: suspend () -> T): ResultWrapper<T> {
+    return withContext(dispatcher) {
+        try {
+            ResultWrapper.Success(apiCall.invoke())
+        } catch (throwable: Throwable) {
+            when (throwable) {
+                is IOException -> ResultWrapper.NetworkError
+                is HttpException -> {
+                    val code = throwable.code()
+                    val errorResponse = convertErrorBody(throwable)
+                    ResultWrapper.GenericError(code, errorResponse)
+                }
+                else -> {
+                    ResultWrapper.GenericError(null, null)
+                }
+            }
+        }
+    }
+}
+
+private fun convertErrorBody(throwable: HttpException): ErrorResponse? {
+    return try {
+        throwable.response()?.errorBody()?.source()?.let {
+            val moshiAdapter = Moshi.Builder().build().adapter(ErrorResponse::class.java)
+            moshiAdapter.fromJson(it)
+        }
+    } catch (exception: Exception) {
+        null
+    }
+}
 //interface MazoviaApi {
 //    suspend fun sendLogin(username: String, password: String): String //LoginResponse
 //}

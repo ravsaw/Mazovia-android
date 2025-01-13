@@ -47,8 +47,10 @@ import kotlinx.coroutines.runBlocking
 
 // Model danych
 data class YourDataModel(
-    val name: String,
-    val description: String,
+    val type: String,
+    val status: String,
+    val created: String,
+    val contextData: String,
     val acceptClick: () -> Unit,
     val rejectClick: () -> Unit,
 )
@@ -57,89 +59,103 @@ data class YourDataModel(
 @Composable
 fun SwipeableItemRow(
     item: YourDataModel,
-    onEditClick: (YourDataModel) -> Unit,
-    onDeleteClick: (YourDataModel) -> Unit
+    onRightSwipe: () -> Unit,
+    onLeftSwipe: () -> Unit
 ) {
     var isVisible by remember { mutableStateOf(true) }
 
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            when (dismissValue) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    onDeleteClick(item)
-                    isVisible = true
-                    true
-                }
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    onEditClick(item)
-                    isVisible = true
-                    true
-                }
-                else -> false
+    val dismissState = rememberSwipeToDismissBoxState(confirmValueChange = { dismissValue ->
+        when (dismissValue) {
+            SwipeToDismissBoxValue.EndToStart -> {
+                onLeftSwipe()
+                isVisible = true
+                true
             }
+
+            SwipeToDismissBoxValue.StartToEnd -> {
+                onRightSwipe()
+                isVisible = true
+                true
+            }
+
+            else -> false
         }
-    )
+    })
 
     AnimatedVisibility(
         visible = isVisible,
-        exit = fadeOut(animationSpec = tween(durationMillis = 500)) +
-                slideOutHorizontally(animationSpec = tween(durationMillis = 500))
+        exit = fadeOut(animationSpec = tween(durationMillis = 500)) + slideOutHorizontally(
+            animationSpec = tween(durationMillis = 500)
+        )
     ) {
-        SwipeToDismissBox(
-            state = dismissState,
-            backgroundContent = {
-                val color = when (dismissState.dismissDirection) {
-                    SwipeToDismissBoxValue.StartToEnd -> Color.Green.copy(alpha = 0.5f)
-                    SwipeToDismissBoxValue.EndToStart -> Color.Red.copy(alpha = 0.5f)
-                    else -> Color.Transparent
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color)
-                        .padding(horizontal = 20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.StartToEnd -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = "Akceptuj",
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text("Edytuj", color = Color.White)
-                            }
+        SwipeToDismissBox(state = dismissState, backgroundContent = {
+            val color = when (dismissState.dismissDirection) {
+                SwipeToDismissBoxValue.StartToEnd -> Color.Green.copy(alpha = 0.5f)
+                SwipeToDismissBoxValue.EndToStart -> Color.Red.copy(alpha = 0.5f)
+                else -> Color.Transparent
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                when (dismissState.dismissDirection) {
+                    SwipeToDismissBoxValue.StartToEnd -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = "Akceptuj",
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Akceptuj", color = Color.White)
                         }
-                        SwipeToDismissBoxValue.EndToStart -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Odrzuć",
-                                    tint = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text("Odrzuć", color = Color.White)
-                            }
+                    }
+
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Odrzuć",
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Odrzuć", color = Color.White)
                         }
-                        else -> {}
                     }
-                }
-            },
-            content = {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(item.name, style = MaterialTheme.typography.headlineSmall)
-                        Text(item.description, style = MaterialTheme.typography.bodyMedium)
-                    }
+
+                    else -> {}
                 }
             }
-        )
+        }, content = {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Row(modifier = Modifier.padding(top = 8.dp, end = 8.dp, start = 8.dp, bottom = 0.dp)) {
+                            Text("Type", style = MaterialTheme.typography.bodySmall)
+                            Spacer(Modifier.weight(1f))
+                            Text("Status", style = MaterialTheme.typography.bodySmall)
+                        }
+                        Row(modifier = Modifier.padding(top = 0.dp, end = 8.dp, start = 8.dp, bottom = 0.dp)) {
+                            Text(item.type, style = MaterialTheme.typography.headlineSmall)
+                            Spacer(Modifier.weight(1f))
+                            Text(item.status, style = MaterialTheme.typography.headlineSmall)
+                        }
+                        
+                        Row(modifier = Modifier.padding(8.dp)) {
+                            Text("created: " + item.created, style = MaterialTheme.typography.bodyLarge)
+                        }
+                        Row(modifier = Modifier.padding(8.dp)) {
+                            Text(item.contextData, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+            }
+        })
     }
 }
 
@@ -154,31 +170,56 @@ fun HomeScreen(navController: NavController) {
     // Funkcja do ładowania danych
     fun loadData() {
         isRefreshing = true
-        // Tutaj wywołaj swoje API
-        // Przykładowe dane
-        items = listOf(
-            YourDataModel("Tytuł 1", "Opis 1", {}, {}),
-            YourDataModel("Tytuł 2", "Opis 2", {}, {})
-        )
-        items2 = listOf(
-            YourDataModel("Tytuł 3", "Opis 3", {}, {}),
-            YourDataModel("Tytuł 4", "Opis 4", {}, {})
-        )
-        isRefreshing = false
 
         runBlocking {
-
-            val list1 = RetrofitMazoviaApi.shared().getTFAConfirmList().map { element ->
-                    YourDataModel(element.ip_address, element.user_agent.orEmpty(), {}, {})
+//            val list1 = RetrofitMazoviaApi.shared().getTFAConfirmList().map { element ->
+//                    YourDataModel(element.ip_address, element.user_agent.orEmpty(), {}, {})
+//                }
+            val i2 = RetrofitMazoviaApi.shared2().getConfirmList()
+            when (i2) {
+                is ResultWrapper.NetworkError -> {
+                    items2 = listOf(YourDataModel("NetworkError", i2.toString(), "","", {}, {}),
+                    )
                 }
-            val list2 = RetrofitMazoviaApi.shared().getConfirmList().data.map { e ->
-                YourDataModel(e.type, e.contextData, {}, {})
-            }
+                is ResultWrapper.GenericError -> {
+                    items2 = listOf(YourDataModel("GenericError", i2.toString(),"","", {}, {}),
+                    )
+                }
+                is ResultWrapper.Success -> {
+                    items2 = i2.value.data.map { e ->
+                        YourDataModel(e.type, e.status, e.createdAt, e.contextData,
+                            {
 
+                                runBlocking {
+                                    val requestBody = VerificationRequestBody(
+                                        verificationId = e.verificationId,
+                                        action = "approve",
+                                        deviceId = "test-device-android",
+                                        biometricVerified = false,
+                                        verificationCode = null,
+                                        rejectReason = null
+                                    )
+                                RetrofitMazoviaApi.shared2().verifyRequest(requestBody)
+                                }
+                        }, {
+                                runBlocking {
+                                    val requestBody = VerificationRequestBody(
+                                        verificationId = e.verificationId,
+                                        action = "reject",
+                                        deviceId = "test-device-android",
+                                        biometricVerified = false,
+                                        verificationCode = null,
+                                        rejectReason = null
+                                    )
+                                    RetrofitMazoviaApi.shared2().verifyRequest(requestBody)
+                                }
+                        })
+                    }
+                }
+            }
+            isRefreshing = false
 
         }
-
-
     }
 
     // Wywołaj ładowanie przy pierwszym uruchomieniu
@@ -186,37 +227,35 @@ fun HomeScreen(navController: NavController) {
         loadData()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Home") },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navController.navigate(Screen.Login.route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Default.Close, contentDescription = "Logout")
-                    }
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("Home") }, navigationIcon = {
+            IconButton(onClick = {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
                 }
-            )
-        }
-    ) { paddingValues ->
+            }) {
+                Icon(Icons.Default.Close, contentDescription = "Logout")
+            }
+        })
+    }) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             // Pull to refresh
-            SwipeRefresh(
-                state = rememberSwipeRefreshState(isRefreshing),
-                onRefresh = { loadData() }
-            ) {
+            SwipeRefresh(state = rememberSwipeRefreshState(isRefreshing),
+                onRefresh = { loadData() }) {
                 // Lista lub widok pustej listy
-                if (items.isEmpty()) {
+                if (items.isEmpty() && items2.isEmpty()) {
                     EmptyListContent()
                 } else {
                     LazyColumn {
                         items(items) { item ->
-                            SwipeableItemRow(item = item, onEditClick = { }, onDeleteClick = { })
+                            SwipeableItemRow(item = item,
+                                onRightSwipe = item.acceptClick,
+                                onLeftSwipe = item.rejectClick)
+                        }
+                        items(items2) { item ->
+                            SwipeableItemRow(item = item,
+                                onRightSwipe = item.acceptClick,
+                                onLeftSwipe = item.rejectClick)
                         }
                     }
                 }
@@ -229,8 +268,7 @@ fun HomeScreen(navController: NavController) {
 @Composable
 fun EmptyListContent() {
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("Brak danych", style = MaterialTheme.typography.headlineSmall)
@@ -241,16 +279,16 @@ fun EmptyListContent() {
     }
 }
 
-@Composable
-fun ItemRow(item: YourDataModel) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(item.name, style = MaterialTheme.typography.headlineSmall)
-            Text(item.description, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
+//@Composable
+//fun ItemRow(item: YourDataModel) {
+//    Card(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(8.dp)
+//    ) {
+//        Column(modifier = Modifier.padding(16.dp)) {
+//            Text(item.name, style = MaterialTheme.typography.headlineSmall)
+//            Text(item.description, style = MaterialTheme.typography.bodyMedium)
+//        }
+//    }
+//}
