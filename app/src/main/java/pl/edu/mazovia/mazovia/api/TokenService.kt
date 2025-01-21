@@ -1,4 +1,4 @@
-package pl.edu.mazovia.mazovia
+package pl.edu.mazovia.mazovia.api
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.auth0.android.jwt.JWT
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.File
@@ -143,6 +144,10 @@ object TokenService {
                 .map { preferences -> preferences[REFRESH_TOKEN_KEY] }
                 .first()
         }
+
+    fun isExpired(token: String): Boolean {
+        return JWT(token).isExpired(60)
+    }
 
     /**
      * Get server code

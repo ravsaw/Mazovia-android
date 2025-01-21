@@ -89,4 +89,9 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
 
     implementation(libs.moshi)
+    implementation(libs.jwtdecode)
+
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation (libs.androidx.lifecycle.runtime.compose)
+    implementation (libs.kotlinx.coroutines.android)
 }
