@@ -2,14 +2,15 @@ package pl.edu.mazovia.mazovia.module.landing
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import pl.edu.mazovia.mazovia.api.TokenService
 import pl.edu.mazovia.mazovia.utils.ResultWrapper
 import pl.edu.mazovia.mazovia.api.RetrofitMazoviaApi
+import pl.edu.mazovia.mazovia.repository.Repository
 
-class LandingViewModel : ViewModel() {
-    private val repository = RetrofitMazoviaApi.getRepository()
+class LandingViewModel(private val repository: Repository) : ViewModel() {
 
     fun checkAuthStatus(
         context: Context,
@@ -61,6 +62,18 @@ class LandingViewModel : ViewModel() {
                 onError("Error checking auth status: ${e.message}")
                 onExpired()
             }
+        }
+    }
+
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(LandingViewModel::class.java)) {
+                val appContext = context.applicationContext
+                val retrofitApi = RetrofitMazoviaApi(appContext)
+                return LandingViewModel(retrofitApi.getRepository()) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
 }

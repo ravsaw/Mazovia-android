@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import pl.edu.mazovia.mazovia.R
 import pl.edu.mazovia.mazovia.Screen
@@ -19,7 +20,9 @@ import pl.edu.mazovia.mazovia.Screen
 @Composable
 fun LandingScreen(
     navController: NavController,
-    viewModel: LandingViewModel = LandingViewModel()
+    viewModel: LandingViewModel = viewModel(
+        factory = LandingViewModel.Factory(LocalContext.current)
+    )
 ) {
     val context = LocalContext.current
 

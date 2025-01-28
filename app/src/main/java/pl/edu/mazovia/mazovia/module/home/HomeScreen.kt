@@ -23,11 +23,12 @@ import pl.edu.mazovia.mazovia.api.TokenService
 @Composable
 fun HomeScreen(
     navController: NavController,
-    viewModel: HomeViewModel = HomeViewModel()
+    viewModel: HomeViewModel = viewModel(
+        factory = HomeViewModel.Factory(LocalContext.current)
+    )
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     Scaffold(
         topBar = {
@@ -120,7 +121,10 @@ private fun ItemWithButtons(
                     bottom = 0.dp
                 )
             ) {
-                Text("Type", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    if (item.isTFA) "Two-Factor Auth" else "Type",
+                    style = MaterialTheme.typography.bodySmall
+                )
                 Spacer(Modifier.weight(1f))
                 Text("Status", style = MaterialTheme.typography.bodySmall)
             }
@@ -136,12 +140,17 @@ private fun ItemWithButtons(
                 Spacer(Modifier.weight(1f))
                 Text(item.status, style = MaterialTheme.typography.headlineSmall)
             }
-            Row(modifier = Modifier.padding(8.dp)) {
-                Text(
-                    "created: ${item.created}",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+
+            // Wyświetlamy datę utworzenia tylko dla nie-TFA elementów
+            if (!item.isTFA && item.created.isNotEmpty()) {
+                Row(modifier = Modifier.padding(8.dp)) {
+                    Text(
+                        "created: ${item.created}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
+
             Row(modifier = Modifier.padding(8.dp)) {
                 Text(item.contextData, style = MaterialTheme.typography.bodySmall)
             }

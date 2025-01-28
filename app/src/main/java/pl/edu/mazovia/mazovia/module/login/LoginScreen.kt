@@ -13,13 +13,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import android.util.Log
+import androidx.lifecycle.viewmodel.compose.viewModel
 import pl.edu.mazovia.mazovia.R
 import pl.edu.mazovia.mazovia.Screen
 
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: LoginViewModel = LoginViewModel()
+    viewModel: LoginViewModel = viewModel(
+        factory = LoginViewModel.Factory(LocalContext.current)
+    )
 ) {
     var login by remember { mutableStateOf("apitester") }
     var password by remember { mutableStateOf("Apitester123") }

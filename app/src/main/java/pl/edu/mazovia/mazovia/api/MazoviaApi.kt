@@ -8,16 +8,16 @@ interface MazoviaApi {
     @FormUrlEncoded
     @POST("auth/login")
     fun sendLogin(
-            @Field("username") username: String,
-            @Field("password") password: String,
-            @Field("deviceInfo") deviceInfo: String,
-            @Field("serverCode") serverCode: String
+        @Field("username") username: String,
+        @Field("password") password: String,
+        @Field("deviceInfo") deviceInfo: String,
+        @Field("serverCode") serverCode: String
     ): Call<LoginResponse>
 
     @FormUrlEncoded
     @POST("auth/refresh-token")
     suspend fun refreshToken(
-            @Field("refresh_token") refreshToken: String
+        @Field("refresh_token") refreshToken: String
     ): TokenResponse
 
     @FormUrlEncoded
@@ -39,19 +39,19 @@ interface MazoviaApi {
     @GET("tfa/list")
     suspend fun getTFAConfirmList(): List<TFAElementResponse>
 
-    @POST("tfa/verify")
+    @GET("tfa/verify")
     suspend fun tfaVerify(
-            @Field("id") veriId: String
+        @Query("id") id: String
     ): String
 
-    @POST("tfa/verify-device")
+    @GET("tfa/verify-device")
     suspend fun tfaVerifyDevice(
-            @Field("id") veriId: String
+        @Query("id") id: String
     ): String
 
-    @POST("tfa/reject")
+    @GET("tfa/reject")
     suspend fun tfaReject(
-            @Field("id") veriId: String
+        @Query("id") id: String
     ): String
 
     @GET("tfa/tmp-clear")

@@ -5,5 +5,6 @@ data class HomeData(
     val status: String,
     val created: String,
     val contextData: String,
-    val verificationId: String
+    val verificationId: String,
+    val isTFA: Boolean = false // dodane pole do rozróżnienia typu
 )

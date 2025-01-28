@@ -2,19 +2,24 @@ package pl.edu.mazovia.mazovia.module.login
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import pl.edu.mazovia.mazovia.api.TokenService
 import pl.edu.mazovia.mazovia.utils.ResultWrapper
 import pl.edu.mazovia.mazovia.api.RetrofitMazoviaApi
+import pl.edu.mazovia.mazovia.api.MazoviaApi
+import pl.edu.mazovia.mazovia.repository.Repository
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import pl.edu.mazovia.mazovia.models.DebugUnverifyResponse
 import pl.edu.mazovia.mazovia.models.DebugVerifyResponse
 
-class LoginViewModel : ViewModel() {
-    private val repository = RetrofitMazoviaApi.getRepository()
+class LoginViewModel(
+    private val repository: Repository,
+    private val apiService: MazoviaApi
+) : ViewModel() {
 
     fun login(
         username: String,
@@ -65,7 +70,7 @@ class LoginViewModel : ViewModel() {
         onSuccess: (String) -> Unit,
         onError: (String) -> Unit
     ) {
-        RetrofitMazoviaApi.getApiService().debugVerifyDevices()
+        apiService.debugVerifyDevices()
             .enqueue(object : Callback<DebugVerifyResponse> {
                 override fun onResponse(
                     call: Call<DebugVerifyResponse>,
@@ -90,7 +95,7 @@ class LoginViewModel : ViewModel() {
         onSuccess: (String) -> Unit,
         onError: (String) -> Unit
     ) {
-        RetrofitMazoviaApi.getApiService().debugUnverifyDevices()
+        apiService.debugUnverifyDevices()
             .enqueue(object : Callback<DebugUnverifyResponse> {
                 override fun onResponse(
                     call: Call<DebugUnverifyResponse>,
@@ -109,5 +114,20 @@ class LoginViewModel : ViewModel() {
                     onError("Unverify failed: ${t.message}")
                 }
             })
+    }
+
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
+                val appContext = context.applicationContext
+                val retrofitApi = RetrofitMazoviaApi(appContext)
+                return LoginViewModel(
+                    repository = retrofitApi.getRepository(),
+                    apiService = retrofitApi.getApiService()
+                ) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
     }
 }
