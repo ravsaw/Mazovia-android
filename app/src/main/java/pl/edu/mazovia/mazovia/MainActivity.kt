@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import pl.edu.mazovia.mazovia.module.home.HomeScreen
 import pl.edu.mazovia.mazovia.module.landing.LandingScreen
 import pl.edu.mazovia.mazovia.module.login.LoginScreen
+import pl.edu.mazovia.mazovia.module.verification.VerificationScreen
 import pl.edu.mazovia.mazovia.ui.theme.MazoviaTheme
 
 
@@ -37,6 +38,11 @@ fun AppNavigation() {
         }
         composable(Screen.Home.route) {
             HomeScreen(navController)
+        }
+
+
+        composable(Screen.Verification.route) {
+            VerificationScreen(navController)
         }
     }
 }

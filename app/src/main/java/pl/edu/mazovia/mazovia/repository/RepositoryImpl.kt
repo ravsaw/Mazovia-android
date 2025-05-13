@@ -12,6 +12,7 @@ class RepositoryImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : Repository {
 
+    // Existing implementations
     override suspend fun getConfirmList(): ResultWrapper<ConfirmList> {
         return safeApiCall(dispatcher) { service.getConfirmList() }
     }
@@ -27,10 +28,7 @@ class RepositoryImpl(
         ) }
     }
 
-
-
     override suspend fun login(username: String, password: String, serverCode: String): ResultWrapper<LoginResponse> {
-
         return safeApiCall(dispatcher) {
             service.sendLogin(
                 username, password,
@@ -63,5 +61,36 @@ class RepositoryImpl(
 
     override suspend fun rejectTFA(veriId: String): ResultWrapper<String> {
         return safeApiCall(dispatcher) { service.tfaReject(veriId) }
+    }
+
+    // New verification API implementations
+    override suspend fun verifyVerification(request: VerificationVerifyRequest): ResultWrapper<VerificationVerifyResponse> {
+        return safeApiCall(dispatcher) { service.verifyVerification(request) }
+    }
+
+    override suspend fun getVerificationStatus(token: String): ResultWrapper<VerificationStatusResponse> {
+        return safeApiCall(dispatcher) { service.getVerificationStatus(token) }
+    }
+
+    override suspend fun getVerificationPendingList(
+        page: Int,
+        pageSize: Int,
+        sort: String
+    ): ResultWrapper<VerificationListResponse> {
+        return safeApiCall(dispatcher) { service.getVerificationPendingList(page, pageSize, sort) }
+    }
+
+    override suspend fun getVerificationAllList(
+        page: Int,
+        pageSize: Int,
+        sort: String,
+        status: String?,
+        type: String?
+    ): ResultWrapper<VerificationListResponse> {
+        return safeApiCall(dispatcher) { service.getVerificationAllList(page, pageSize, sort, status, type) }
+    }
+
+    override suspend fun cancelVerification(token: String): ResultWrapper<VerificationCancelResponse> {
+        return safeApiCall(dispatcher) { service.cancelVerification(token) }
     }
 }

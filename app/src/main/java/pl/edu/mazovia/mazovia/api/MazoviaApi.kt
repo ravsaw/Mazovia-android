@@ -71,4 +71,37 @@ interface MazoviaApi {
         @Field("reject_reason") rejectReason: String?,
         @Field("verification_id") verificationId: String
     ): VerificationResponse
+
+    // New verification endpoints
+
+    @POST("confirm/verification/verify")
+    suspend fun verifyVerification(
+        @Body request: VerificationVerifyRequest
+    ): VerificationVerifyResponse
+
+    @GET("confirm/verification/status")
+    suspend fun getVerificationStatus(
+        @Query("token") token: String
+    ): VerificationStatusResponse
+
+    @GET("confirm/verification/pending-list")
+    suspend fun getVerificationPendingList(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("sort") sort: String = "-created_at"
+    ): VerificationListResponse
+
+    @GET("confirm/verification/all-list")
+    suspend fun getVerificationAllList(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("sort") sort: String = "-created_at",
+        @Query("status") status: String? = null,
+        @Query("type") type: String? = null
+    ): VerificationListResponse
+
+    @DELETE("confirm/verification/cancel")
+    suspend fun cancelVerification(
+        @Query("token") token: String
+    ): VerificationCancelResponse
 }
