@@ -6,7 +6,7 @@ import retrofit2.http.*
 
 interface MazoviaApi {
     @FormUrlEncoded
-    @POST("auth/login")
+    @POST("auth/identity/login")
     fun sendLogin(
         @Field("username") username: String,
         @Field("password") password: String,
@@ -15,22 +15,22 @@ interface MazoviaApi {
     ): Call<LoginResponse>
 
     @FormUrlEncoded
-    @POST("auth/refresh-token")
+    @POST("auth/identity/refresh-token")
     suspend fun refreshToken(
         @Field("refresh_token") refreshToken: String
     ): TokenResponse
 
     @FormUrlEncoded
-    @POST("auth/logout")
+    @POST("auth/identity/logout")
     suspend fun logout(): LogoutResponse
 
-    @GET("auth/user-info")
+    @GET("auth/identity/user-info")
     suspend fun getUserInfo(): UserInfoResponse
 
-    @GET("auth/tmp-verify")
+    @GET("auth/identity/tmp-verify")
     fun debugVerifyDevices(): Call<DebugVerifyResponse>
 
-    @GET("auth/tmp-delete")
+    @GET("auth/identity/tmp-delete")
     fun debugUnverifyDevices(): Call<DebugUnverifyResponse>
 
     @GET("tfa/test")
@@ -42,17 +42,17 @@ interface MazoviaApi {
     @GET("tfa/verify")
     suspend fun tfaVerify(
         @Query("id") id: String
-    ): String
+    ): TFAResponse
 
     @GET("tfa/verify-device")
     suspend fun tfaVerifyDevice(
         @Query("id") id: String
-    ): String
+    ): TFAResponse
 
     @GET("tfa/reject")
     suspend fun tfaReject(
         @Query("id") id: String
-    ): String
+    ): TFAResponse
 
     @GET("tfa/tmp-clear")
     suspend fun tfaClearDev(): String

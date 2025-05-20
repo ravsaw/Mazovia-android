@@ -107,3 +107,7 @@ data class ConfirmResult(
     @SerializedName("created_at")
     val createdAt: String
 )
+
+data class TFAResponse(
+    val success: Boolean
+)

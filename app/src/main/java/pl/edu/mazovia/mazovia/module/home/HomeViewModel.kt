@@ -27,26 +27,6 @@ class HomeViewModel(private val repository: Repository) : ViewModel() {
         loadData()
     }
 
-    fun logout(context: Context, onLogoutComplete: () -> Unit) {
-        viewModelScope.launch {
-            try {
-                when (repository.logout()) {
-                    is ResultWrapper.Success -> {
-                        TokenService.removeToken(context)
-                        onLogoutComplete()
-                    }
-                    else -> {
-                        TokenService.removeToken(context)
-                        onLogoutComplete()
-                    }
-                }
-            } catch (e: Exception) {
-                TokenService.removeToken(context)
-                onLogoutComplete()
-            }
-        }
-    }
-
     fun loadData() {
         viewModelScope.launch {
             _isRefreshing.value = true
@@ -127,7 +107,13 @@ class HomeViewModel(private val repository: Repository) : ViewModel() {
                 }
 
                 when (result) {
-                    is ResultWrapper.Success -> loadData()
+                    is ResultWrapper.Success -> {
+                        if (result.data.success) {
+                            loadData()
+                        } else {
+                            _uiState.value = HomeUiState.Error("Błąd podczas weryfikacji TFA")
+                        }
+                    }
                     else -> _uiState.value = HomeUiState.Error("Błąd podczas weryfikacji TFA")
                 }
             } else {
@@ -136,8 +122,8 @@ class HomeViewModel(private val repository: Repository) : ViewModel() {
                     deviceId = "test-device-123",
                     biometricVerified = 0,
                     verificationId = item.verificationId,
-                    rejectReason = if (isApproved) "" else "reject",
-                    verificationCode = ""
+                    rejectReason = if (isApproved) null else "reject",
+                    verificationCode = null
                 )
 
                 when (repository.verifyRequest(requestBody)) {
@@ -145,6 +131,26 @@ class HomeViewModel(private val repository: Repository) : ViewModel() {
                     is ResultWrapper.NetworkError -> _uiState.value = HomeUiState.Error("Błąd połączenia")
                     else -> _uiState.value = HomeUiState.Error("Wystąpił błąd")
                 }
+            }
+        }
+    }
+
+    fun logout(context: Context, onLogoutComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                when (repository.logout()) {
+                    is ResultWrapper.Success -> {
+                        TokenService.removeToken(context)
+                        onLogoutComplete()
+                    }
+                    else -> {
+                        TokenService.removeToken(context)
+                        onLogoutComplete()
+                    }
+                }
+            } catch (e: Exception) {
+                TokenService.removeToken(context)
+                onLogoutComplete()
             }
         }
     }

@@ -55,11 +55,11 @@ class RepositoryImpl(
         return safeApiCall(dispatcher) { service.getTFAConfirmList() }
     }
 
-    override suspend fun verifyTFA(veriId: String): ResultWrapper<String> {
+    override suspend fun verifyTFA(veriId: String): ResultWrapper<TFAResponse> {
         return safeApiCall(dispatcher) { service.tfaVerify(veriId) }
     }
 
-    override suspend fun rejectTFA(veriId: String): ResultWrapper<String> {
+    override suspend fun rejectTFA(veriId: String): ResultWrapper<TFAResponse> {
         return safeApiCall(dispatcher) { service.tfaReject(veriId) }
     }
 
