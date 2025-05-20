@@ -88,7 +88,7 @@ fun LoginScreen(
                             password = password,
                             context = context,
                             onSuccess = {
-                                navController.navigate(Screen.Home.route) {
+                                navController.navigate(Screen.Verification.route) {
                                     popUpTo(Screen.Login.route) { inclusive = true }
                                 }
                             },

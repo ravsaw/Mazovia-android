@@ -33,29 +33,29 @@ interface MazoviaApi {
     @GET("auth/identity/tmp-delete")
     fun debugUnverifyDevices(): Call<DebugUnverifyResponse>
 
-    @GET("tfa/test")
-    suspend fun tfaTest(): String
-
-    @GET("tfa/list")
-    suspend fun getTFAConfirmList(): List<TFAElementResponse>
-
-    @GET("tfa/verify")
-    suspend fun tfaVerify(
-        @Query("id") id: String
-    ): TFAResponse
-
-    @GET("tfa/verify-device")
-    suspend fun tfaVerifyDevice(
-        @Query("id") id: String
-    ): TFAResponse
-
-    @GET("tfa/reject")
-    suspend fun tfaReject(
-        @Query("id") id: String
-    ): TFAResponse
-
-    @GET("tfa/tmp-clear")
-    suspend fun tfaClearDev(): String
+//    @GET("tfa/test")
+//    suspend fun tfaTest(): String
+//
+//    @GET("tfa/list")
+//    suspend fun getTFAConfirmList(): List<TFAElementResponse>
+//
+//    @GET("tfa/verify")
+//    suspend fun tfaVerify(
+//        @Query("id") id: String
+//    ): TFAResponse
+//
+//    @GET("tfa/verify-device")
+//    suspend fun tfaVerifyDevice(
+//        @Query("id") id: String
+//    ): TFAResponse
+//
+//    @GET("tfa/reject")
+//    suspend fun tfaReject(
+//        @Query("id") id: String
+//    ): TFAResponse
+//
+//    @GET("tfa/tmp-clear")
+//    suspend fun tfaClearDev(): String
 
     @Headers("Content-Type: application/json")
     @GET("verification/request/list")

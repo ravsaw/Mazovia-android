@@ -24,9 +24,9 @@ interface Repository {
     suspend fun refreshToken(refreshToken: String): ResultWrapper<TokenResponse>
     suspend fun logout(): ResultWrapper<LogoutResponse>
     suspend fun getUserInfo(): ResultWrapper<UserInfoResponse>
-    suspend fun getTFAConfirmList(): ResultWrapper<List<TFAElementResponse>>
-    suspend fun verifyTFA(veriId: String): ResultWrapper<TFAResponse>
-    suspend fun rejectTFA(veriId: String): ResultWrapper<TFAResponse>
+//    suspend fun getTFAConfirmList(): ResultWrapper<List<TFAElementResponse>>
+//    suspend fun verifyTFA(veriId: String): ResultWrapper<TFAResponse>
+//    suspend fun rejectTFA(veriId: String): ResultWrapper<TFAResponse>
 
     // Add these verification methods
     suspend fun verifyVerification(request: VerificationVerifyRequest): ResultWrapper<VerificationVerifyResponse>

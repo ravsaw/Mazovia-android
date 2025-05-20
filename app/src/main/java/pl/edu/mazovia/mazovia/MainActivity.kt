@@ -39,8 +39,6 @@ fun AppNavigation() {
         composable(Screen.Home.route) {
             HomeScreen(navController)
         }
-
-
         composable(Screen.Verification.route) {
             VerificationScreen(navController)
         }

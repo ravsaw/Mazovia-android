@@ -35,6 +35,9 @@ class RetrofitMazoviaApi(context: Context) {
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             })
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.HEADERS
+            })
             .apply {
                 authInterceptor?.let { addInterceptor(it) }
             }

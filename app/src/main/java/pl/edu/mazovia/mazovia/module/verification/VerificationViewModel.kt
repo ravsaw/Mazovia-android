@@ -39,7 +39,7 @@ class VerificationViewModel(private val repository: Repository) : ViewModel() {
                 when (val result = repository.getVerificationPendingList()) {
                     is ResultWrapper.Success -> {
                         if (result.data.success) {
-                            val verifications = result.data.data
+                            val verifications = result.data.data ?: emptyList()
                             _uiState.value = if (verifications.isEmpty()) {
                                 VerificationUiState.Empty
                             } else {
@@ -76,7 +76,7 @@ class VerificationViewModel(private val repository: Repository) : ViewModel() {
                 when (val result = repository.getVerificationAllList(status = status, type = type)) {
                     is ResultWrapper.Success -> {
                         if (result.data.success) {
-                            val verifications = result.data.data
+                            val verifications = result.data.data ?: emptyList()
                             _uiState.value = if (verifications.isEmpty()) {
                                 VerificationUiState.Empty
                             } else {

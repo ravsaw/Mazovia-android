@@ -33,10 +33,10 @@ class HomeViewModel(private val repository: Repository) : ViewModel() {
             try {
                 // Pobieramy dane równolegle z obu endpointów
                 val confirmDeferred = async { repository.getConfirmList() }
-                val tfaDeferred = async { repository.getTFAConfirmList() }
+//                val tfaDeferred = async { repository.getTFAConfirmList() }
 
                 val confirmResult = confirmDeferred.await()
-                val tfaResult = tfaDeferred.await()
+//                val tfaResult = tfaDeferred.await()
 
                 val allItems = mutableListOf<HomeData>()
 
@@ -66,27 +66,27 @@ class HomeViewModel(private val repository: Repository) : ViewModel() {
                     }
                 }
 
-                when (tfaResult) {
-                    is ResultWrapper.Success<List<TFAElementResponse>> -> {
-                        val tfaItems = tfaResult.data.map { e ->
-                            HomeData(
-                                type = "TFA",
-                                status = "pending",
-                                created = "",
-                                contextData = "IP: ${e.ip_address}\nUser Agent: ${e.user_agent ?: "N/A"}",
-                                verificationId = e.verification_id,
-                                isTFA = true
-                            )
-                        }
-                        allItems.addAll(tfaItems)
-                    }
-                    is ResultWrapper.NetworkError -> {
-                        // Kontynuujemy nawet jeśli nie udało się pobrać TFA
-                    }
-                    else -> {
-                        // Kontynuujemy nawet jeśli nie udało się pobrać TFA
-                    }
-                }
+//                when (tfaResult) {
+//                    is ResultWrapper.Success<List<TFAElementResponse>> -> {
+//                        val tfaItems = tfaResult.data.map { e ->
+//                            HomeData(
+//                                type = "TFA",
+//                                status = "pending",
+//                                created = "",
+//                                contextData = "IP: ${e.ip_address}\nUser Agent: ${e.user_agent ?: "N/A"}",
+//                                verificationId = e.verification_id,
+//                                isTFA = true
+//                            )
+//                        }
+//                        allItems.addAll(tfaItems)
+//                    }
+//                    is ResultWrapper.NetworkError -> {
+//                        // Kontynuujemy nawet jeśli nie udało się pobrać TFA
+//                    }
+//                    else -> {
+//                        // Kontynuujemy nawet jeśli nie udało się pobrać TFA
+//                    }
+//                }
 
                 val sortedItems = allItems.sortedByDescending { it.created.takeIf { it.isNotEmpty() } }
                 _uiState.value = HomeUiState.Success(sortedItems)
@@ -100,22 +100,22 @@ class HomeViewModel(private val repository: Repository) : ViewModel() {
     fun verifyRequest(item: HomeData, isApproved: Boolean) {
         viewModelScope.launch {
             if (item.isTFA) {
-                val result = if (isApproved) {
-                    repository.verifyTFA(item.verificationId)
-                } else {
-                    repository.rejectTFA(item.verificationId)
-                }
-
-                when (result) {
-                    is ResultWrapper.Success -> {
-                        if (result.data.success) {
-                            loadData()
-                        } else {
-                            _uiState.value = HomeUiState.Error("Błąd podczas weryfikacji TFA")
-                        }
-                    }
-                    else -> _uiState.value = HomeUiState.Error("Błąd podczas weryfikacji TFA")
-                }
+//                val result = if (isApproved) {
+//                    repository.verifyTFA(item.verificationId)
+//                } else {
+//                    repository.rejectTFA(item.verificationId)
+//                }
+//
+//                when (result) {
+//                    is ResultWrapper.Success -> {
+//                        if (result.data.success) {
+//                            loadData()
+//                        } else {
+//                            _uiState.value = HomeUiState.Error("Błąd podczas weryfikacji TFA")
+//                        }
+//                    }
+//                    else -> _uiState.value = HomeUiState.Error("Błąd podczas weryfikacji TFA")
+//                }
             } else {
                 val requestBody = VerificationRequestBody(
                     action = if (isApproved) "approve" else "reject",

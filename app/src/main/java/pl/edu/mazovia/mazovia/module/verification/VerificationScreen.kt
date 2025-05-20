@@ -251,8 +251,9 @@ fun VerificationScreen(
                         Text("Type: ${verification.type}")
                         Text("Status: ${verification.status}")
                         Text("Created: ${verification.createdAt}")
-                        Text("Expires: ${verification.expiresAt}")
-                        Text("Context: ${verification.contextData}")
+                        Text("Expires: ${verification.expiresInSeconds}")
+                        Text("Type name: ${verification.typeName}")
+                        Text("Code: ${verification.code}")
                     }
                 } else {
                     Text("No verification details available")
@@ -306,17 +307,23 @@ fun VerificationItem(
             
             // Expires date
             Text(
-                text = "Expires: ${verification.expiresAt}",
+                text = "Expires: ${verification.expiresInSeconds}",
                 style = MaterialTheme.typography.bodyMedium
             )
             
             // Context data
             Text(
-                text = "Context: ${verification.contextData}",
+                text = "Type: ${verification.typeName}",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
-            
+
+            Text(
+                text = "Code: ${verification.code}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
             // Actions
             Row(
                 modifier = Modifier.fillMaxWidth(),

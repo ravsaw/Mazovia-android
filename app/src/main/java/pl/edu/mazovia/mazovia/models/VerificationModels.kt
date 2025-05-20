@@ -36,16 +36,18 @@ data class VerificationDetail(
     val userId: String,
     @SerializedName("initiated_by")
     val initiatedBy: String,
-    @SerializedName("context_data")
-    val contextData: String,
+    @SerializedName("type_name")
+    val typeName: String,
     @SerializedName("initiated_at")
     val initiatedAt: String,
-    @SerializedName("expires_at")
-    val expiresAt: String,
+    @SerializedName("expires_in_seconds")
+    val expiresInSeconds: String,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")
-    val updatedAt: String
+    val updatedAt: String,
+    val code: String,
+    val token: String
     // Can be extended with more fields as needed
 )
 
@@ -54,7 +56,7 @@ data class VerificationListResponse(
     val success: Boolean,
     val code: Int,
     val message: String,
-    val data: List<VerificationDetail>,
+    val data: List<VerificationDetail>?,
     val meta: MetaPagination? = null
 )
 

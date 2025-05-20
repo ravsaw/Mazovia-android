@@ -51,17 +51,17 @@ class RepositoryImpl(
         return safeApiCall(dispatcher) { service.getUserInfo() }
     }
 
-    override suspend fun getTFAConfirmList(): ResultWrapper<List<TFAElementResponse>> {
-        return safeApiCall(dispatcher) { service.getTFAConfirmList() }
-    }
-
-    override suspend fun verifyTFA(veriId: String): ResultWrapper<TFAResponse> {
-        return safeApiCall(dispatcher) { service.tfaVerify(veriId) }
-    }
-
-    override suspend fun rejectTFA(veriId: String): ResultWrapper<TFAResponse> {
-        return safeApiCall(dispatcher) { service.tfaReject(veriId) }
-    }
+//    override suspend fun getTFAConfirmList(): ResultWrapper<List<TFAElementResponse>> {
+//        return safeApiCall(dispatcher) { service.getTFAConfirmList() }
+//    }
+//
+//    override suspend fun verifyTFA(veriId: String): ResultWrapper<TFAResponse> {
+//        return safeApiCall(dispatcher) { service.tfaVerify(veriId) }
+//    }
+//
+//    override suspend fun rejectTFA(veriId: String): ResultWrapper<TFAResponse> {
+//        return safeApiCall(dispatcher) { service.tfaReject(veriId) }
+//    }
 
     // New verification API implementations
     override suspend fun verifyVerification(request: VerificationVerifyRequest): ResultWrapper<VerificationVerifyResponse> {

@@ -1,5 +1,6 @@
 package pl.edu.mazovia.mazovia.api
 
+import android.util.Log
 import android.content.Context
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -11,10 +12,9 @@ class AuthInterceptor(private val context: Context, private val repository: Repo
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
 
-        // Sprawdzamy czy to request do TFA endpointów
-        val isTfaRequest = request.url.toString().contains("/tfa/")
-
-        if (!isTfaRequest) {
+        var url = request.url.toString()
+        val isTokenRequired = url.contains("/tfa/") || url.contains("/verification/pending-list") || url.contains("/verification/verify")
+        if (!isTokenRequired) {
             return chain.proceed(request)
         }
 
@@ -26,6 +26,7 @@ class AuthInterceptor(private val context: Context, private val repository: Repo
         val authenticatedRequest = request.newBuilder()
             .header("Authorization", "Bearer $accessToken")
             .build()
+        Log.d("Token", "To jest token: $accessToken")
 
         return chain.proceed(authenticatedRequest)
     }
