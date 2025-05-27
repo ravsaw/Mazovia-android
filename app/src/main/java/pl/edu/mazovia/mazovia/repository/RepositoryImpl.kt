@@ -1,3 +1,4 @@
+// app/src/main/java/pl/edu/mazovia/mazovia/repository/RepositoryImpl.kt
 package pl.edu.mazovia.mazovia.repository
 
 import kotlinx.coroutines.CoroutineDispatcher
@@ -6,6 +7,7 @@ import pl.edu.mazovia.mazovia.api.MazoviaApi
 import pl.edu.mazovia.mazovia.models.*
 import pl.edu.mazovia.mazovia.utils.ResultWrapper
 import pl.edu.mazovia.mazovia.utils.safeApiCall
+import com.google.gson.Gson
 
 class RepositoryImpl(
     private val service: MazoviaApi,
@@ -51,21 +53,25 @@ class RepositoryImpl(
         return safeApiCall(dispatcher) { service.getUserInfo() }
     }
 
-//    override suspend fun getTFAConfirmList(): ResultWrapper<List<TFAElementResponse>> {
-//        return safeApiCall(dispatcher) { service.getTFAConfirmList() }
-//    }
-//
-//    override suspend fun verifyTFA(veriId: String): ResultWrapper<TFAResponse> {
-//        return safeApiCall(dispatcher) { service.tfaVerify(veriId) }
-//    }
-//
-//    override suspend fun rejectTFA(veriId: String): ResultWrapper<TFAResponse> {
-//        return safeApiCall(dispatcher) { service.tfaReject(veriId) }
-//    }
-
     // New verification API implementations
-    override suspend fun verifyVerification(request: VerificationVerifyRequest): ResultWrapper<VerificationVerifyResponse> {
-        return safeApiCall(dispatcher) { service.verifyVerification(request) }
+    override suspend fun verifyVerification(type: String, token: String, answer: String?): ResultWrapper<VerificationVerifyResponse> {
+        return safeApiCall(dispatcher) {
+            // Create device info as JSON string
+            val deviceInfo = mapOf(
+                "device_id" to "android-device-${System.currentTimeMillis()}",
+                "device_name" to "Android Device",
+                "app_version" to "1.0",
+                "os_type" to "Android"
+            )
+            val deviceInfoJson = Gson().toJson(deviceInfo)
+
+            service.verifyVerification(
+                type = type,
+                token = token,
+                answer = answer,
+                deviceInfo = deviceInfoJson
+            )
+        }
     }
 
     override suspend fun getVerificationStatus(token: String): ResultWrapper<VerificationStatusResponse> {

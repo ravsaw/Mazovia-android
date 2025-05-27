@@ -1,3 +1,4 @@
+// app/src/main/java/pl/edu/mazovia/mazovia/api/MazoviaApi.kt
 package pl.edu.mazovia.mazovia.api
 
 import pl.edu.mazovia.mazovia.models.*
@@ -5,6 +6,7 @@ import retrofit2.Call
 import retrofit2.http.*
 
 interface MazoviaApi {
+    // Auth endpoints
     @FormUrlEncoded
     @POST("auth/identity/login")
     fun sendLogin(
@@ -33,30 +35,7 @@ interface MazoviaApi {
     @GET("auth/identity/tmp-delete")
     fun debugUnverifyDevices(): Call<DebugUnverifyResponse>
 
-//    @GET("tfa/test")
-//    suspend fun tfaTest(): String
-//
-//    @GET("tfa/list")
-//    suspend fun getTFAConfirmList(): List<TFAElementResponse>
-//
-//    @GET("tfa/verify")
-//    suspend fun tfaVerify(
-//        @Query("id") id: String
-//    ): TFAResponse
-//
-//    @GET("tfa/verify-device")
-//    suspend fun tfaVerifyDevice(
-//        @Query("id") id: String
-//    ): TFAResponse
-//
-//    @GET("tfa/reject")
-//    suspend fun tfaReject(
-//        @Query("id") id: String
-//    ): TFAResponse
-//
-//    @GET("tfa/tmp-clear")
-//    suspend fun tfaClearDev(): String
-
+    // Legacy verification endpoints (keep for backward compatibility)
     @Headers("Content-Type: application/json")
     @GET("verification/request/list")
     suspend fun getConfirmList(): ConfirmList
@@ -72,11 +51,14 @@ interface MazoviaApi {
         @Field("verification_id") verificationId: String
     ): VerificationResponse
 
-    // New verification endpoints
-
+    // NEW: Updated verification endpoints according to documentation
+    @FormUrlEncoded
     @POST("confirm/verification/verify")
     suspend fun verifyVerification(
-        @Body request: VerificationVerifyRequest
+        @Field("type") type: String,
+        @Field("token") token: String,
+        @Field("answer") answer: String? = null,
+        @Field("device_info") deviceInfo: String? = null
     ): VerificationVerifyResponse
 
     @GET("confirm/verification/status")

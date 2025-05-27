@@ -35,8 +35,8 @@ fun LandingScreen(
                 }
             },
             onValid = {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Landing.route) { inclusive = true }
+                navController.navigate(Screen.Verification.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
                 }
             },
             onError = { error ->

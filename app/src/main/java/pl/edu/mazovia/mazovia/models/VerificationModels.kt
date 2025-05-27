@@ -1,57 +1,94 @@
+// app/src/main/java/pl/edu/mazovia/mazovia/models/VerificationModels.kt
 package pl.edu.mazovia.mazovia.models
 
 import com.google.gson.annotations.SerializedName
 
-// For POST /verify request
+// Template models
+data class ChoiceTemplate(
+    val type: String,
+    @SerializedName("render_style")
+    val renderStyle: String,
+    val title: String,
+    val options: List<ChoiceOption>
+)
+
+data class ChoiceOption(
+    val id: String,
+    val text: String,
+    val style: String
+)
+
+data class VerificationContext(
+    val title: String,
+    val description: String
+)
+
+data class VerificationDetail(
+    val id: Int,
+    val type: String, // This is just a string in the real API
+    @SerializedName("type_name")
+    val typeName: String,
+    val status: String,
+    @SerializedName("created_at")
+    val createdAt: String,
+    @SerializedName("expires_in_seconds")
+    val expiresInSeconds: Int,
+    val complete: Boolean,
+    val code: String,
+    val token: String,
+    @SerializedName("pending_expiration")
+    val pendingExpiration: String,
+    @SerializedName("verified_at")
+    val verifiedAt: String? = null,
+    val attempts: Int,
+    @SerializedName("display_template")
+    val displayTemplate: String? = null,
+    val context: VerificationContext,
+    @SerializedName("choice_template")
+    val choiceTemplateJson: String? = null // This comes as JSON string
+) {
+    // Parse choice_template JSON string to object
+    fun getChoiceTemplate(): ChoiceTemplate? {
+        return try {
+            choiceTemplateJson?.let {
+                com.google.gson.Gson().fromJson(it, ChoiceTemplate::class.java)
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+}
+
+// Request/Response models
 data class VerificationVerifyRequest(
     val type: String,
     val token: String,
-    val device_info: List<Any>? = null
-)
+    @SerializedName("device_info")
+    val deviceInfo: Map<String, Any>? = null,
+    val answer: Any? = null // Can be String or Number
+) {
+    override fun toString(): String {
+        return "VerificationVerifyRequest(type='$type', token='${token.take(8)}...', deviceInfo=$deviceInfo, answer=$answer)"
+    }
+}
 
-// For POST /verify response
 data class VerificationVerifyResponse(
     val success: Boolean,
     val code: Int,
     val message: String,
-    val data: VerificationDetailData? = null
+    val data: VerificationDataWrapper? = null
 )
 
-// For GET /status response
-data class VerificationStatusResponse(
-    val success: Boolean,
-    val code: Int,
-    val data: VerificationDetailData? = null
-)
-
-data class VerificationDetailData(
+data class VerificationDataWrapper(
     val verification: VerificationDetail
 )
 
-data class VerificationDetail(
-    val id: String,
-    val type: String,
-    val status: String,
-    @SerializedName("user_id")
-    val userId: String,
-    @SerializedName("initiated_by")
-    val initiatedBy: String,
-    @SerializedName("type_name")
-    val typeName: String,
-    @SerializedName("initiated_at")
-    val initiatedAt: String,
-    @SerializedName("expires_in_seconds")
-    val expiresInSeconds: String,
-    @SerializedName("created_at")
-    val createdAt: String,
-    @SerializedName("updated_at")
-    val updatedAt: String,
-    val code: String,
-    val token: String
-    // Can be extended with more fields as needed
+data class VerificationStatusResponse(
+    val success: Boolean,
+    val code: Int,
+    val data: VerificationDataWrapper? = null
 )
 
-// For GET /pending-list and GET /all-list responses
 data class VerificationListResponse(
     val success: Boolean,
     val code: Int,
@@ -60,6 +97,13 @@ data class VerificationListResponse(
     val meta: MetaPagination? = null
 )
 
+data class VerificationCancelResponse(
+    val success: Boolean,
+    val code: Int,
+    val message: String
+)
+
+// Pagination models
 data class MetaPagination(
     val pagination: Pagination
 )
@@ -71,20 +115,4 @@ data class Pagination(
     val pageCount: Int,
     val from: Int,
     val to: Int
-)
-
-// For DELETE /cancel response
-data class VerificationCancelResponse(
-    val success: Boolean,
-    val code: Int,
-    val message: String
-)
-
-// Error responses for verification endpoints
-data class VerificationErrorResponse(
-    val success: Boolean,
-    val code: Int,
-    val message: String,
-    val errors: Map<String, List<String>>? = null,
-    val internal_code: String? = null
 )

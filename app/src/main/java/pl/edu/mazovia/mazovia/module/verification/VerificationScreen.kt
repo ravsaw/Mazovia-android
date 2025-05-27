@@ -1,29 +1,56 @@
+// app/src/main/java/pl/edu/mazovia/mazovia/module/verification/VerificationScreen.kt
 package pl.edu.mazovia.mazovia.module.verification
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
+import pl.edu.mazovia.mazovia.Screen
 import pl.edu.mazovia.mazovia.models.VerificationDetail
 
-/**
- * This is an example of a screen that would display and manage verifications.
- * It demonstrates how to use the VerificationViewModel with Jetpack Compose UI.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerificationScreen(
@@ -33,45 +60,10 @@ fun VerificationScreen(
     )
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val actionState by viewModel.actionState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    
-    // Dialog state for showing verification token input
-    var showVerifyDialog by remember { mutableStateOf(false) }
-    var verificationToken by remember { mutableStateOf("") }
-    var verificationType by remember { mutableStateOf("email") }
-    
-    // Dialog state for showing verification status
-    var showStatusDialog by remember { mutableStateOf(false) }
-    var statusToken by remember { mutableStateOf("") }
-    
-    // State for snackbar
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Effect to handle action state changes
-    LaunchedEffect(actionState) {
-        when (actionState) {
-            is VerificationActionState.Success -> {
-                val message = (actionState as VerificationActionState.Success).message
-                snackbarHostState.showSnackbar(message)
-                viewModel.resetActionState()
-            }
-            is VerificationActionState.Error -> {
-                val message = (actionState as VerificationActionState.Error).message
-                snackbarHostState.showSnackbar(message)
-                viewModel.resetActionState()
-            }
-            is VerificationActionState.VerificationStatus -> {
-                // Handle status display
-                showStatusDialog = true
-            }
-            else -> {}
-        }
-    }
-
-    // Load verifications when the screen is first displayed
+    // Load pending verifications when screen opens
     LaunchedEffect(Unit) {
         viewModel.loadPendingVerifications()
     }
@@ -79,31 +71,35 @@ fun VerificationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Verifications") },
+                title = { Text("Pending Verifications") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = {
+                        viewModel.logout(context) {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        }
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = "Logout")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showVerifyDialog = true }) {
-                        Icon(Icons.Default.Search, contentDescription = "Verify Token")
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                     IconButton(onClick = { viewModel.loadPendingVerifications() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Main content based on UI state
-            when (uiState) {
+            when (val currentState = uiState) {
                 is VerificationUiState.Loading -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -121,7 +117,10 @@ fun VerificationScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text("No verifications found")
+                            Text(
+                                "No pending verifications",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.loadPendingVerifications() }) {
                                 Text("Refresh")
@@ -130,33 +129,21 @@ fun VerificationScreen(
                     }
                 }
                 is VerificationUiState.Success -> {
-                    val verifications = (uiState as VerificationUiState.Success).verifications
                     LazyColumn {
-                        items(verifications) { verification ->
-                            VerificationItem(
+                        items(currentState.verifications) { verification ->
+                            PendingVerificationItem(
                                 verification = verification,
+                                onVerify = { code ->
+                                    viewModel.verifyToken(verification.type, verification.token, code)
+                                },
                                 onCancel = {
-                                    // Only allow cancellation for pending verifications
-                                    if (verification.status == "pending") {
-                                        scope.launch {
-                                            // In a real app, you would get the token from the verification
-                                            // Here we just simulate with the ID for demonstration
-                                            viewModel.cancelVerification(verification.id)
-                                        }
-                                    } else {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                "Only pending verifications can be cancelled"
-                                            )
-                                        }
-                                    }
+                                    viewModel.cancelVerification(verification.token)
                                 }
                             )
                         }
                     }
                 }
                 is VerificationUiState.Error -> {
-                    val errorMessage = (uiState as VerificationUiState.Error).message
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -165,7 +152,11 @@ fun VerificationScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text(errorMessage, color = MaterialTheme.colorScheme.error)
+                            Text(
+                                currentState.message,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.loadPendingVerifications() }) {
                                 Text("Try Again")
@@ -174,179 +165,270 @@ fun VerificationScreen(
                     }
                 }
             }
-            
-            // Loading indicator overlay
+
             if (isLoading) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
     }
-    
-    // Verify token dialog
+}
+
+@Composable
+fun PendingVerificationItem(
+    verification: VerificationDetail,
+    onVerify: (String?) -> Unit,
+    onCancel: () -> Unit
+) {
+    var showVerifyDialog by remember { mutableStateOf(false) }
+    var codeInput by remember { mutableStateOf("") }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header with type and status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = verification.typeName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Type: ${verification.type}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                StatusBadge(status = verification.status)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Context information
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = verification.context.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = verification.context.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Verification details
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Code:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = verification.code,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Token:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "${verification.token.take(8)}...",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Display template if available
+            verification.displayTemplate?.let { template ->
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Text(
+                        text = template,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Choice template if available
+            verification.getChoiceTemplate()?.let { choiceTemplate ->
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = choiceTemplate.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            choiceTemplate.options.forEach { option ->
+                                val buttonColors = when (option.style) {
+                                    "success" -> ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50)
+                                    )
+                                    "secondary" -> ButtonDefaults.outlinedButtonColors()
+                                    else -> ButtonDefaults.buttonColors()
+                                }
+
+                                if (option.style == "secondary") {
+                                    OutlinedButton(
+                                        onClick = { onVerify(option.id) },
+                                        colors = buttonColors,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(option.text, maxLines = 1)
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = { onVerify(option.id) },
+                                        colors = buttonColors,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(option.text, maxLines = 1)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Action buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedButton(
+                    onClick = onCancel,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Cancel")
+                }
+
+                // Show verify button only if no choice template
+                if (verification.getChoiceTemplate() == null) {
+                    Button(onClick = { showVerifyDialog = true }) {
+                        Text("Verify")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Time information
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Created: ${verification.createdAt}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Expires: ${verification.pendingExpiration}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+
+    // Verify dialog
     if (showVerifyDialog) {
         AlertDialog(
             onDismissRequest = { showVerifyDialog = false },
-            title = { Text("Verify Token") },
+            title = { Text("Verify ${verification.typeName}") },
             text = {
                 Column {
+                    verification.displayTemplate?.let { template ->
+                        Text(
+                            text = template,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
                     OutlinedTextField(
-                        value = verificationType,
-                        onValueChange = { verificationType = it },
-                        label = { Text("Type") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                    )
-                    OutlinedTextField(
-                        value = verificationToken,
-                        onValueChange = { verificationToken = it },
-                        label = { Text("Token") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
+                        value = codeInput,
+                        onValueChange = { codeInput = it },
+                        label = { Text("Enter code") },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        if (verificationToken.isNotBlank() && verificationType.isNotBlank()) {
-                            viewModel.verifyToken(verificationType, verificationToken)
-                            showVerifyDialog = false
-                        }
+                        onVerify(codeInput.ifBlank { null })
+                        showVerifyDialog = false
+                        codeInput = ""
                     }
                 ) {
                     Text("Verify")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showVerifyDialog = false }) {
+                TextButton(onClick = {
+                    showVerifyDialog = false
+                    codeInput = ""
+                }) {
                     Text("Cancel")
                 }
             }
         )
-    }
-    
-    // Show verification status dialog
-    if (showStatusDialog) {
-        val verification = (actionState as? VerificationActionState.VerificationStatus)?.verification
-        
-        AlertDialog(
-            onDismissRequest = { 
-                showStatusDialog = false
-                viewModel.resetActionState()
-            },
-            title = { Text("Verification Status") },
-            text = {
-                if (verification != null) {
-                    Column {
-                        Text("ID: ${verification.id}")
-                        Text("Type: ${verification.type}")
-                        Text("Status: ${verification.status}")
-                        Text("Created: ${verification.createdAt}")
-                        Text("Expires: ${verification.expiresInSeconds}")
-                        Text("Type name: ${verification.typeName}")
-                        Text("Code: ${verification.code}")
-                    }
-                } else {
-                    Text("No verification details available")
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { 
-                        showStatusDialog = false
-                        viewModel.resetActionState()
-                    }
-                ) {
-                    Text("OK")
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun VerificationItem(
-    verification: VerificationDetail,
-    onCancel: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Header with type and status
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = verification.type,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                
-                StatusBadge(status = verification.status)
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Created date
-            Text(
-                text = "Created: ${verification.createdAt}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            
-            // Expires date
-            Text(
-                text = "Expires: ${verification.expiresInSeconds}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            
-            // Context data
-            Text(
-                text = "Type: ${verification.typeName}",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            Text(
-                text = "Code: ${verification.code}",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            // Actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                if (verification.status == "pending") {
-                    OutlinedButton(
-                        onClick = onCancel,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color.Red
-                        )
-                    ) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Cancel",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text("Cancel")
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -359,14 +441,14 @@ fun StatusBadge(status: String) {
         "cancelled" -> Color(0xFF9E9E9E) to Color.White
         else -> Color(0xFF2196F3) to Color.White
     }
-    
+
     Surface(
         color = backgroundColor,
         shape = MaterialTheme.shapes.small
     ) {
         Text(
             text = status,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.labelSmall,
             color = textColor,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         )
